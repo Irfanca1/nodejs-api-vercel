@@ -1,12 +1,14 @@
-const { Pool } = require('pg');
+const { Sequelize } = require('sequelize');
+const pg = require('pg');
 
-const pool = new Pool({
-  connectionString: process.env.POSTGRES_URL + '?sslmode=require',
+const sequelize = new Sequelize(process.env.POSTGRES_URL, {
+  dialectModule: pg,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
 });
 
-pool.connect((err) => {
-  if (err) throw err;
-  console.log('Connect to PostgreSQL successfully!');
-});
-
-module.exports = pool;
+module.exports = sequelize;
