@@ -1,65 +1,69 @@
-const postgre = require('../database');
+const { Book } = require('../models');
+
 const bookController = {
   getAll: async (req, res) => {
     try {
-      const { rows } = await postgre.query('select * from books');
-      res.json({ msg: 'OK', data: rows });
+      const books = await Book.findAll();
+      res.json({ msg: 'OK', data: books });
     } catch (error) {
-      res.json({ msg: error.msg });
+      res.json({ msg: error.message });
     }
   },
   getById: async (req, res) => {
     try {
-      const { rows } = await postgre.query('select * from books where book_id = $1', [req.params.id]);
+      const book = await Book.findByPk(req.params.id);
 
-      if (rows[0]) {
-        return res.json({ msg: 'OK', data: rows });
+      if (book) {
+        return res.json({ msg: 'OK', data: book });
       }
 
       res.status(404).json({ msg: 'not found' });
     } catch (error) {
-      res.json({ msg: error.msg });
+      res.json({ msg: error.message });
     }
   },
   create: async (req, res) => {
     try {
       const { name, price } = req.body;
 
-      const sql = 'INSERT INTO books(name, price) VALUES($1, $2) RETURNING *';
+      const book = await Book.create({ name, price });
 
-      const { rows } = await postgre.query(sql, [name, price]);
-
-      res.json({ msg: 'OK', data: rows[0] });
+      res.json({ msg: 'OK', data: book });
     } catch (error) {
-      res.json({ msg: error.msg });
+      res.json({ msg: error.message });
     }
   },
   updateById: async (req, res) => {
     try {
       const { name, price } = req.body;
 
-      const sql = 'UPDATE books set name = $1, price = $2 where book_id = $3 RETURNING *';
+      const book = await Book.findByPk(req.params.id);
 
-      const { rows } = await postgre.query(sql, [name, price, req.params.id]);
+      if (book) {
+        book.name = name;
+        book.price = price;
+        await book.save();
 
-      res.json({ msg: 'OK', data: rows[0] });
+        return res.json({ msg: 'OK', data: book });
+      }
+
+      res.status(404).json({ msg: 'not found' });
     } catch (error) {
-      res.json({ msg: error.msg });
+      res.json({ msg: error.message });
     }
   },
   deleteById: async (req, res) => {
     try {
-      const sql = 'DELETE FROM books where book_id = $1 RETURNING *';
+      const book = await Book.findByPk(req.params.id);
 
-      const { rows } = await postgre.query(sql, [req.params.id]);
-
-      if (rows[0]) {
-        return res.json({ msg: 'OK', data: rows[0] });
+      if (book) {
+        await book.destroy();
+        return res.json({ msg: 'OK', data: book });
       }
 
       return res.status(404).json({ msg: 'not found' });
     } catch (error) {
-      res.json({ msg: error.msg });
+      res.json({ msg: error.message });
     }
   },
 };
